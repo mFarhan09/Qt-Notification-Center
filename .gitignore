@@ -1,0 +1,19 @@
+# Qt build folders
+build*/
+*.pro.user
+*.autosave
+*.user
+
+# Compiled files
+*.o
+*.obj
+*.exe
+*.dll
+
+# Qt Creator backups
+*.qmlproject.user
+*.qbs.user
+
+# OS junk
+.DS_Store
+Thumbs.db
