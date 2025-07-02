@@ -15,11 +15,54 @@ MainWindow::MainWindow(QWidget *parent)
     whatsappLayout = new QVBoxLayout;
     ui->whatsappContainer->setLayout(whatsappLayout);
 
-     wa = new DummyWhatsappNotifier(this);
-     connect(wa,&DummyWhatsappNotifier::newNotification,this,&MainWindow::handleNotification);
+    notifProcess = new QProcess(this);
+    connect (notifProcess,&QProcess::readyReadStandardOutput,this,&MainWindow::handleIncomingNotification);
+     //start the python script
+    QString pythonPath = "C:/Users/farhan/AppData/Local/Programs/Python/Python312/python.exe";
+    QString scriptPath = "C:/Users/farhan/Desktop/Summer2025/3_Phase1_Qt/6_NotificationCenter/NotificationCenter/notifier.py";
+
+    notifProcess->start(pythonPath, QStringList() << scriptPath);
+
+
+      if(!notifProcess->waitForStarted())
+      {
+          qDebug()  << "Process Failed to start : " << notifProcess->errorString();
+      }
+      else
+      {
+          qDebug() << "Process started Sucessfully!" ;
+      }
+   //  wa = new DummyWhatsappNotifier(this);
+   //  connect(wa,&DummyWhatsappNotifier::newNotification,this,&MainWindow::handleNotification);
 
 }
+//handle incoming notification
+void MainWindow::handleIncomingNotification()
+{
+    while (notifProcess->canReadLine()) {
+          QByteArray line = notifProcess->readLine().trimmed();
 
+          QJsonParseError err;
+          QJsonDocument doc = QJsonDocument::fromJson(line, &err);
+          if (err.error != QJsonParseError::NoError) {
+              qDebug() << "JSON parse error:" << err.errorString();
+              continue;
+          }
+
+          QJsonObject obj = doc.object();
+          QString source = obj["source"].toString();
+          QString title = obj["title"].toString();
+          QString msg = obj["message"].toString();
+          QDateTime ts = QDateTime::fromString(obj["timestamp"].toString(), Qt::ISODate);
+
+          // Route to your signal-based card display
+          handleNotification(source,msg,ts);
+      }
+}
+
+
+
+//handle notification
 void MainWindow::handleNotification(QString title, QString message, QDateTime dt)
 {
     // Create the card container
